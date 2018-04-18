@@ -1,0 +1,23 @@
+#!/bin/bash
+
+function main(){
+    git_repo=$1
+    (cd ${git_repo}; git pull)
+
+    mkdir -p ${git_repo}/stacks
+    ./stackdump ${git_repo}/stacks
+
+    (   cd ${git_repo};
+        git add --all
+        git commit -am "rancher-dump $(date) for $RANCHER_URL"
+        git push
+    )
+}
+
+if [[ "$1" == "" ]]; then
+    GIT_REPO="./output/"
+else
+    GIT_REPO="$1"
+fi 
+
+main $GIT_REPO

@@ -1,0 +1,24 @@
+#!/bin/bash
+
+function main(){
+    output=$1
+    projectId=$(curl -s -X GET -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" $RANCHER_URL/v2-beta/projects | jq -r '.data[0].id')
+    echo "projectId: $projectId"
+    stackIds=$(curl -s -X GET -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" $RANCHER_URL/v2-beta/projects/$projectId/stacks | jq -r '.data[].id')
+    for stackId in $stackIds; do
+        echo "dump stack $stackId"
+        name=$(curl -s -X GET -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" $RANCHER_URL/v2-beta/projects/$projectId/stacks/$stackId | jq -r '.name')    
+        curl --output dump.zip -s -X GET -u "${RANCHER_ACCESS_KEY}:${RANCHER_SECRET_KEY}" $RANCHER_URL/v2-beta/projects/$projectId/stacks/$stackId/composeconfig
+        mkdir -p $output/$name
+        unzip -o -d $output/$name dump.zip
+        rm dump.zip
+    done
+}
+
+if [[ "$1" == "" ]]; then
+    OUTPUT_DIR="./output/"
+else
+    OUTPUT_DIR="$1"
+fi 
+
+main $OUTPUT_DIR
